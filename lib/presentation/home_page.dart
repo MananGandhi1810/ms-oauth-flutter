@@ -2,6 +2,8 @@ import 'package:aad_oauth/aad_oauth.dart';
 import 'package:aad_oauth/model/config.dart';
 import 'package:calendar_integration/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:microsoft_graph_api/microsoft_graph_api.dart';
+import 'package:microsoft_graph_api/models/models.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.navigatorKey});
@@ -16,13 +18,15 @@ class _HomePageState extends State<HomePage> {
   late Config config;
   late AadOAuth aadOauth;
   bool isLoggedIn = false;
+  late MSGraphAPI msGraphAPI;
 
   @override
   void initState() {
     config = Config(
       tenant: Constants.tenant, // Set this to "common" for multi-tenant apps
       clientId: Constants.clientId,
-      scope: "openid profile offline_access Calendars.ReadWrite",
+      scope:
+          "openid profile User.read email offline_access Calendars.ReadWrite",
       redirectUri: "ontrack://login",
       navigatorKey: widget.navigatorKey,
       loader: const Center(child: CircularProgressIndicator()),
@@ -33,11 +37,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _checkLogin() async {
+    await aadOauth.refreshToken();
     String? token = await aadOauth.getAccessToken();
     debugPrint(token ?? "No Token");
     setState(() {
       isLoggedIn = token != null;
     });
+    if (token != null) {
+      msGraphAPI = MSGraphAPI(token);
+      User user = await msGraphAPI.me.fetchUserInfo();
+      debugPrint(user.id);
+      final calendars = await msGraphAPI.calendars.fetchCalendarEventsForRange(
+        DateTime.now(),
+        DateTime.now().add(
+          const Duration(days: 10),
+        ),
+      );
+      debugPrint(calendars.toString());
+    }
   }
 
   void _login() async {
