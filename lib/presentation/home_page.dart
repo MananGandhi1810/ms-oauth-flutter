@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:aad_oauth/aad_oauth.dart';
 import 'package:aad_oauth/model/config.dart';
 import 'package:calendar_integration/constants.dart';
@@ -23,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     config = Config(
-      tenant: Constants.tenant, // Set this to "common" for multi-tenant apps
+      tenant: Constants.tenant,
       clientId: Constants.clientId,
       scope:
           "openid profile User.read email offline_access Calendars.ReadWrite",
@@ -39,7 +41,7 @@ class _HomePageState extends State<HomePage> {
   void _checkLogin() async {
     await aadOauth.refreshToken();
     String? token = await aadOauth.getAccessToken();
-    debugPrint(token ?? "No Token");
+    log(token ?? "No Token");
     setState(() {
       isLoggedIn = token != null;
     });
